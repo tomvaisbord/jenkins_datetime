@@ -1,14 +1,19 @@
 pipeline {
     agent any
-    
-    triggers {
-        githubPush() // Trigger the pipeline on a GitHub push event
-    }
-    
     stages {
-        stage('Test Webhook') {
+        stage('Build') {
             steps {
-                echo 'Hello, Jenkins! The webhook is working.'
+                echo 'Building the project...'
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying the application...'
             }
         }
     }
