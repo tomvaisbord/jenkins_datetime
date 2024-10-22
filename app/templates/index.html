@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date and Time App</title>
+</head>
+<body>
+    <h1>Get Current Date and Time</h1>
+
+    <form method="POST">
+        <button type="submit">Show Date and Time</button>
+    </form>
+
+    {% if current_time %}
+    <p>The current date and time is: {{ current_time }}</p>
+    {% endif %}
+</body>
+</html>
