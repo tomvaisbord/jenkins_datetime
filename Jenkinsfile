@@ -1,20 +1,6 @@
-pipeline {
-    agent any
-    stages {
-        stage('Build') {
-            steps {
-                echo 'Building the project...'
-            }
-        }
-        stage('Test') {
-            steps {
-                echo 'Running tests...'
-            }
-        }
-        stage('Deploy') {
-            steps {
-                echo 'Deploying the application...'
-            }
-        }
-    }
-}
+@Library('jenkins-shared-library') _
+
+datetimePipeline(
+    dockerRepo: 'tomvais/datetime-app',
+    imageTag: 'latest'
+)
