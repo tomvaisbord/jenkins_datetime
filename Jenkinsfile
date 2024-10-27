@@ -25,13 +25,21 @@ pipeline {
                 testDocker("${DOCKER_IMAGE}:${BUILD_NUMBER}")
             }
         }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-api-token', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
+                }
+            }
+        }
         
         stage('Push Docker Image to Docker Hub') {
             when {
                 expression { currentBuild.result == 'SUCCESS' }
             }
             steps {
-                pushDocker("${DOCKER_IMAGE}", 'docker-hub-api-token', "${BUILD_NUMBER}")
+                pushDocker("${DOCKER_IMAGE}", "${BUILD_NUMBER}")
             }
         }
         
@@ -47,12 +55,13 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up....'
+            echo 'Cleaning up...'
             sh '''
                 docker ps -aq --filter name!=datetime-app | xargs -r docker rm -f
                 docker image prune -f
                 docker volume prune -f
                 docker network prune -f
+                docker logout
             '''
         }
         success {
