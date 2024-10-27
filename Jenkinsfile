@@ -47,7 +47,7 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up...'
+            echo 'Cleaning up....'
             sh '''
                 docker ps -aq --filter name!=datetime-app | xargs -r docker rm -f
                 docker image prune -f
