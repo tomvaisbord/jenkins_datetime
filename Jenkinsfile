@@ -5,7 +5,6 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'tomvais/datetime_app'
-        DOCKER_HUB_API_TOKEN = credentials('docker-hub-api-token')  // DockerHub credentials
     }
 
     stages {
@@ -64,8 +63,12 @@ pipeline {
             }
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-api-token') {
-                        docker.image("${DOCKER_IMAGE}:${BUILD_NUMBER}").push("${BUILD_NUMBER}")
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-api-token', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh '''
+                            docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+                            docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                            docker logout
+                        '''
                     }
                 }
             }
