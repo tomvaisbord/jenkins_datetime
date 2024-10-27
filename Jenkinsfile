@@ -50,18 +50,16 @@ pipeline {
             echo 'Cleaning up...'
             // Remove all containers except for the running `datetime-app`
             sh '''
-                docker ps -aq --filter "name!=datetime-app" | xargs -r docker rm -f
+                docker ps -aq --filter name!=datetime-app | xargs -r docker rm -f
                 docker image prune -f
                 docker volume prune -f
                 docker network prune -f
             '''
-        }        
+        }
         success {
             echo 'Pipeline completed successfully!'
         }
-        
         failure {
             echo 'Pipeline failed. Cleaning up resources.'
         }
     }
-}
