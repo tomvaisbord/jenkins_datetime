@@ -31,7 +31,7 @@ pipeline {
                 expression { currentBuild.result == 'SUCCESS' }
             }
             steps {
-                pushDocker("${DOCKER_IMAGE}:${BUILD_NUMBER}", 'docker-hub-api-token')
+                pushDocker("${DOCKER_IMAGE}", 'docker-hub-api-token', "${BUILD_NUMBER}")
             }
         }
         
@@ -48,7 +48,6 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            // Remove all containers except for the running `datetime-app`
             sh '''
                 docker ps -aq --filter name!=datetime-app | xargs -r docker rm -f
                 docker image prune -f
