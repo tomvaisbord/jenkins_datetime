@@ -77,7 +77,7 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up...'
+            echo 'Cleaning up....'
             sh '''
                 docker container prune -f
                 docker image prune -f
