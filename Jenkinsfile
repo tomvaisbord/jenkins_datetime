@@ -4,6 +4,7 @@ pipeline {
     agent { label 'agent_01' }
 
     environment {
+        DOCKER_IMAGE = 'tomvais/datetime_app'
         DOCKER_HUB_API_TOKEN = credentials('docker-hub-api-token')  // DockerHub credentials
     }
 
@@ -13,63 +14,79 @@ pipeline {
                 checkout scm
             }
         }
+        
         stage('Build Docker Image') {
             steps {
-                buildDocker('datetime-app')
-            }
-        }
-        stage('Test Docker Image') {
-            steps {
-                echo "Testing Docker Image datetime-app..."
                 script {
-                    // Stop and remove any existing test container
-                    sh '''
-                    if [ $(docker ps -aq -f name=test-container) ]; then
-                        docker stop test-container
-                        docker rm test-container
-                    fi
-                    '''
-
-                    // Run the new container, wait, and then test the endpoint
-                    sh '''
-                    docker run --name test-container -d datetime-app
-                    sleep 5  # Wait for the app to start listening on port 5000
-                    docker exec test-container curl http://localhost:5000
-                    docker stop test-container
-                    docker rm test-container
-                    '''
+                    sh 'docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ./app'
                 }
             }
         }
-        stage('Push Docker Image') {
+        
+        stage('Remove Existing Test Container') {
             steps {
-                pushDocker('datetime-app', 'docker-hub-api-token')
+                sh 'docker rm -f datetime_app_test || true'
             }
         }
-        stage('Deploy Docker Image') {
+
+        stage('Run Docker Container for Testing') {
             steps {
-                deployDocker('datetime-app')
+                sh '''
+                    docker run -d --name datetime_app_test -p 5000:5000 ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    sleep 5  # Wait for the app to start
+                '''
+            }
+        }
+
+        stage('Test Docker Image') {
+            steps {
+                script {
+                    try {
+                        sh 'docker exec datetime_app_test curl -f http://localhost:5000'
+                        currentBuild.result = 'SUCCESS'
+                    } catch (Exception e) {
+                        currentBuild.result = 'FAILURE'
+                        throw e
+                    }
+                }
+            }
+        }
+        
+        stage('Stop and Remove Test Container') {
+            steps {
+                sh 'docker stop datetime_app_test && docker rm datetime_app_test'
+            }
+        }
+        
+        stage('Push Docker Image to Docker Hub') {
+            when {
+                expression { currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-api-token') {
+                        docker.image("${DOCKER_IMAGE}:${BUILD_NUMBER}").push("${BUILD_NUMBER}")
+                    }
+                }
             }
         }
     }
 
     post {
         always {
-            echo 'Cleaning up....'
-            // Remove any stopped containers
-            sh 'docker container prune -f'
-            // Remove dangling images
-            sh 'docker image prune -f'
-            // Optionally remove specific images if needed
-            sh 'docker rmi -f datetime-app || true'
-            // Remove unused volumes (if applicable)
-            sh 'docker volume prune -f'
-            // Remove unused networks (if applicable)
-            sh 'docker network prune -f'
+            echo 'Cleaning up...'
+            sh '''
+                docker container prune -f
+                docker image prune -f
+                docker volume prune -f
+                docker network prune -f
+            '''
         }
+        
         success {
             echo 'Pipeline completed successfully!'
         }
+        
         failure {
             echo 'Pipeline failed. Cleaning up resources.'
         }
