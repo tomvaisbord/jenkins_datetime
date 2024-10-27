@@ -34,4 +34,26 @@ pipeline {
             }
         }
     }
+
+    post {
+        always {
+            echo 'Cleaning up...'
+            // Remove any stopped containers
+            sh 'docker container prune -f'
+            // Remove dangling images
+            sh 'docker image prune -f'
+            // Optionally remove specific images if needed
+            sh 'docker rmi -f datetime-app || true'
+            // Remove unused volumes (if applicable)
+            sh 'docker volume prune -f'
+            // Remove unused networks (if applicable)
+            sh 'docker network prune -f'
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Cleaning up resources.'
+        }
+    }
 }
