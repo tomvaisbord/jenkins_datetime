@@ -20,7 +20,24 @@ pipeline {
         }
         stage('Test Docker Image') {
             steps {
-                testDocker('datetime-app')
+                echo "Testing Docker Image datetime-app..."
+                script {
+                    // Stop and remove any existing test container
+                    sh '''
+                    if [ $(docker ps -aq -f name=test-container) ]; then
+                        docker stop test-container
+                        docker rm test-container
+                    fi
+                    '''
+
+                    // Run and test the new container
+                    sh '''
+                    docker run --name test-container -d datetime-app
+                    docker exec test-container curl http://localhost:5000
+                    docker stop test-container
+                    docker rm test-container
+                    '''
+                }
             }
         }
         stage('Push Docker Image') {
