@@ -30,9 +30,10 @@ pipeline {
                     fi
                     '''
 
-                    // Run and test the new container
+                    // Run the new container, wait, and then test the endpoint
                     sh '''
                     docker run --name test-container -d datetime-app
+                    sleep 5  # Wait for the app to start listening on port 5000
                     docker exec test-container curl http://localhost:5000
                     docker stop test-container
                     docker rm test-container
