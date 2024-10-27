@@ -37,7 +37,7 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up...'
+            echo 'Cleaning up....'
             // Remove any stopped containers
             sh 'docker container prune -f'
             // Remove dangling images
