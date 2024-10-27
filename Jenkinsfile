@@ -63,3 +63,4 @@ pipeline {
             echo 'Pipeline failed. Cleaning up resources.'
         }
     }
+}
